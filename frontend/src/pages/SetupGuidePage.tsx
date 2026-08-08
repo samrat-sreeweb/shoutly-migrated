@@ -1,15 +1,22 @@
 import { NavLink } from 'react-router-dom';
 
+const CALLBACKS = [
+  { network: 'x', url: 'https://www.outstand.so/app/api/socials/x/callback' },
+  { network: 'facebook', url: 'https://www.outstand.so/app/api/socials/facebook/callback' },
+  { network: 'instagram', url: 'https://www.outstand.so/app/api/socials/instagram/callback' },
+  { network: 'threads', url: 'https://www.outstand.so/app/api/socials/threads/callback' },
+  { network: 'youtube', url: 'https://www.outstand.so/app/api/socials/youtube/callback' },
+];
+
 export function SetupGuidePage() {
   return (
     <div className="wrap wrap-wide">
       <header className="page-header">
         <span className="badge">SETUP GUIDE</span>
-        <h1>X + Facebook via Outstand</h1>
+        <h1>Connect networks via Outstand</h1>
         <p className="muted">
-          BYOK app credentials (one X app, one Meta app) are registered with Outstand once, up
-          front. Each visitor then connects <em>their own</em> account through OAuth — nothing is
-          saved to a database, only to that browser's session (see the note on the home page).
+          BYOK credentials are registered once with Outstand. Each visitor then connects{' '}
+          <em>their own</em> account through OAuth — accounts stay in that browser session only.
         </p>
         <p className="nav-back">
           <NavLink to="/">← Back to Connect &amp; Post</NavLink>
@@ -17,39 +24,69 @@ export function SetupGuidePage() {
       </header>
 
       <section className="card">
-        <h2>X (Twitter) checklist</h2>
+        <h2>Outstand callback URLs (platform developer consoles)</h2>
+        <p className="muted">
+          Each OAuth app must allow the matching Outstand callback exactly. After token exchange,
+          Outstand redirects to this app&apos;s <code>/oauth/callback</code>.
+        </p>
+        <ol className="steps">
+          {CALLBACKS.map((c) => (
+            <li key={c.network}>
+              <strong>{c.network}</strong>: <code>{c.url}</code>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="card">
+        <h2>Instagram</h2>
+        <ol className="steps">
+          <li>Business or Creator account, linked to a Facebook Page.</li>
+          <li>
+            Meta app OAuth redirect:{' '}
+            <code>https://www.outstand.so/app/api/socials/instagram/callback</code>
+          </li>
+          <li>
+            Env: <code>INSTAGRAM_APP_ID</code> / <code>INSTAGRAM_APP_SECRET</code> (registered as
+            Outstand network <code>instagram</code>).
+          </li>
+          <li>
+            Publishing needs Meta App Review for content publish scopes; Test Mode works for
+            developers/test users first.
+          </li>
+        </ol>
+      </section>
+
+      <section className="card">
+        <h2>Threads</h2>
+        <ol className="steps">
+          <li>Meta Threads app / product with Threads API access.</li>
+          <li>
+            Callback:{' '}
+            <code>https://www.outstand.so/app/api/socials/threads/callback</code>
+          </li>
+          <li>
+            Env: <code>THREAD_APP_ID</code> / <code>THREAD_APP_SECRET</code>.
+          </li>
+        </ol>
+      </section>
+
+      <section className="card">
+        <h2>YouTube</h2>
         <ol className="steps">
           <li>
-            In{' '}
-            <a href="https://console.x.com" target="_blank" rel="noreferrer">
-              console.x.com
-            </a>
-            , open your app → <strong>Settings</strong> (authentication settings).
+            Google Cloud project with <strong>YouTube Data API v3</strong> enabled.
           </li>
           <li>
-            Callback URI / Redirect URL must be exactly:{' '}
-            <code>https://www.outstand.so/app/api/socials/x/callback</code> — this is Outstand's
-            own callback, not this app's. Outstand completes the token exchange with X, then
-            redirects the browser onward to whatever <code>redirectUri</code> was passed to{' '}
-            <code>/api/connect-url</code> (this app uses <code>/oauth/callback</code>).
+            OAuth Web client redirect:{' '}
+            <code>https://www.outstand.so/app/api/socials/youtube/callback</code>
           </li>
           <li>
-            App permissions: <strong>Read and write and Direct message</strong>. Outstand requests
-            the <code>tweet.read</code>, <code>tweet.write</code>, <code>users.read</code>,{' '}
-            <code>follows.read</code>, <code>dm.write</code>, <code>media.write</code>,{' '}
-            <code>offline.access</code> scopes — the DM scope means Read-and-write alone isn't
-            enough; X will reject the OAuth request without the DM tier.
+            Env: <code>GOOGLE_CLIENT_ID</code> / <code>GOOGLE_CLIENT_SECRET</code>.
           </li>
           <li>
-            Type of App: <strong>Native App</strong> (public client) — matches the PKCE
-            (<code>code_challenge</code>) flow Outstand uses for X.
-          </li>
-          <li>
-            Consumer Key / Secret get registered with Outstand once via{' '}
-            <code>POST /v1/social-networks</code> (network <code>x</code>) — either directly, or
-            through this backend's <code>POST /api/networks</code>, which falls back to{' '}
-            <code>X_CONSUMER_KEY</code> / <code>X_SECRET_KEY</code> in <code>.env</code> when the
-            request body omits key/secret.
+            Posts need a publicly reachable video URL (or Outstand media upload). Use top-level{' '}
+            <code>youtube</code> overrides for Shorts / privacy / title.
           </li>
         </ol>
       </section>
@@ -58,16 +95,14 @@ export function SetupGuidePage() {
         <h2>API routes</h2>
         <ol className="steps">
           <li>
-            <code>GET /api/connect-url?network=x&amp;redirectUri=…</code> — start OAuth for a
-            network.
+            <code>GET /api/connect-url?network=instagram|threads|youtube&amp;redirectUri=…</code>
           </li>
           <li>
-            <code>GET /api/accounts?network=x</code> — raw list of every account connected under
-            this Outstand key (used for debugging; the UI intentionally does not call this, since
-            it would show every visitor's accounts, not just yours).
+            <code>POST /api/networks</code> with <code>{`{ "network": "…" }`}</code> to (re)register
+            BYOK from env.
           </li>
           <li>
-            <code>POST /api/post</code> with a specific account ID.
+            <code>POST /api/post</code> with a specific account ID after OAuth.
           </li>
         </ol>
       </section>

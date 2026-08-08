@@ -20,25 +20,44 @@ export class NetworksService {
     secret: string;
   } {
     const n = network.toLowerCase();
-    if (n === 'x' || n === 'twitter') {
-      return {
-        key:
-          this.config.get<string>('X_CLIENT_ID') ||
-          this.config.get<string>('X_CONSUMER_KEY') ||
-          '',
-        secret:
-          this.config.get<string>('X_CLIENT_SECRET') ||
-          this.config.get<string>('X_SECRET_KEY') ||
-          '',
-      };
+    const get = (...keys: string[]) => {
+      for (const k of keys) {
+        const v = this.config.get<string>(k)?.trim();
+        if (v) return v;
+      }
+      return '';
+    };
+
+    switch (n) {
+      case 'x':
+      case 'twitter':
+        return {
+          key: get('X_CLIENT_ID', 'X_CONSUMER_KEY'),
+          secret: get('X_CLIENT_SECRET', 'X_SECRET_KEY'),
+        };
+      case 'facebook':
+        return {
+          key: get('FACEBOOK_APP_ID'),
+          secret: get('FACEBOOK_APP_SECRET'),
+        };
+      case 'instagram':
+        return {
+          key: get('INSTAGRAM_APP_ID', 'FACEBOOK_APP_ID'),
+          secret: get('INSTAGRAM_APP_SECRET', 'FACEBOOK_APP_SECRET'),
+        };
+      case 'threads':
+        return {
+          key: get('THREAD_APP_ID', 'THREADS_APP_ID', 'FACEBOOK_APP_ID'),
+          secret: get('THREAD_APP_SECRET', 'THREADS_APP_SECRET', 'FACEBOOK_APP_SECRET'),
+        };
+      case 'youtube':
+        return {
+          key: get('GOOGLE_CLIENT_ID', 'YOUTUBE_CLIENT_ID'),
+          secret: get('GOOGLE_CLIENT_SECRET', 'YOUTUBE_CLIENT_SECRET'),
+        };
+      default:
+        return { key: '', secret: '' };
     }
-    if (n === 'facebook' || n === 'instagram') {
-      return {
-        key: this.config.get<string>('FACEBOOK_APP_ID') || '',
-        secret: this.config.get<string>('FACEBOOK_APP_SECRET') || '',
-      };
-    }
-    return { key: '', secret: '' };
   }
 
   async configure(dto: ConfigureNetworkDto) {
@@ -48,7 +67,7 @@ export class NetworksService {
 
     if (!clientKey || !clientSecret) {
       throw new BadRequestException(
-        `Missing credentials for "${dto.network}". Pass key/secret in body, or set the matching env vars (X_CONSUMER_KEY/X_SECRET_KEY or FACEBOOK_APP_ID/FACEBOOK_APP_SECRET).`,
+        `Missing credentials for "${dto.network}". Pass key/secret in body, or set env vars for that network (see .env.example).`,
       );
     }
 
