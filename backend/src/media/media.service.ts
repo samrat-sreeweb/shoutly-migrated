@@ -36,10 +36,21 @@ export class MediaService {
       file.buffer.length,
     );
 
+    // Outstand wraps the media object in `data` (same as list/upload).
+    const media =
+      (confirmed as { data?: { url?: string; filename?: string } }).data ??
+      (confirmed as { url?: string; filename?: string });
+    const url = media.url;
+    if (!url) {
+      throw new BadRequestException(
+        'Outstand confirmed the upload but returned no public URL',
+      );
+    }
+
     return {
       success: true,
-      url: confirmed.url,
-      filename: confirmed.filename,
+      url,
+      filename: media.filename || filename,
     };
   }
 }

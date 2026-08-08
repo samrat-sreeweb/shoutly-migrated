@@ -185,11 +185,11 @@ export class OutstandService {
   }
 
   confirmUpload(mediaId: string, size: number) {
-    return this.request<{ url: string; filename: string }>(
-      'POST',
-      `/v1/media/${mediaId}/confirm`,
-      { body: { size } },
-    );
+    return this.request<{
+      data?: { url: string; filename: string };
+      url?: string;
+      filename?: string;
+    }>('POST', `/v1/media/${mediaId}/confirm`, { body: { size } });
   }
 
   // ---- Posts ----

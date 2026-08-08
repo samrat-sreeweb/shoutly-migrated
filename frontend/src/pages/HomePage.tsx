@@ -109,6 +109,9 @@ export function HomePage() {
       let media = payload.media;
       if (payload.file) {
         const uploaded = await api.uploadMedia(payload.file);
+        if (!uploaded.url) {
+          throw new Error('Media upload returned no URL — cannot publish without media.');
+        }
         media = [{ url: uploaded.url, filename: uploaded.filename || payload.file.name }];
       }
 

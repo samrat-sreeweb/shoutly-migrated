@@ -8,8 +8,18 @@ import {
   IsBoolean,
   IsObject,
   ValidateNested,
+  IsUrl,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export class MediaItemDto {
+  @IsUrl({ require_tld: false }, { message: 'media.url must be a valid URL' })
+  url!: string;
+
+  @IsOptional()
+  @IsString()
+  filename?: string;
+}
 
 export class YoutubeOverrideDto {
   @IsOptional()
@@ -63,7 +73,9 @@ export class CreatePostDto {
 
   @IsOptional()
   @IsArray()
-  media?: Array<{ url: string; filename?: string }>;
+  @ValidateNested({ each: true })
+  @Type(() => MediaItemDto)
+  media?: MediaItemDto[];
 
   /** YouTube-specific overrides (top-level Outstand key) */
   @IsOptional()
