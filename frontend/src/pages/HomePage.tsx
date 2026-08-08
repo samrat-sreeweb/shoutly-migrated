@@ -1,49 +1,49 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/client';
-import type { SocialAccount } from '../api/types';
 import { AccountList } from '../components/AccountList';
 import { ComposePostForm } from '../components/ComposePostForm';
 import { ConnectSection } from '../components/ConnectSection';
 import { Header } from '../components/Header';
+import { getSessionAccounts, removeSessionAccount, setPendingNetwork } from '../lib/sessionAccounts';
 
 export function HomePage() {
-  const [accounts, setAccounts] = useState<SocialAccount[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [network, setNetwork] = useState('x');
+  const [accounts, setAccounts] = useState(() => getSessionAccounts());
   const [connecting, setConnecting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  const loadAccounts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await api.getAccounts('facebook');
-      setAccounts(data.accounts);
-    } catch (err) {
-      setAccounts([]);
-      setError(err instanceof Error ? err.message : 'Failed to load accounts');
-    } finally {
-      setLoading(false);
-    }
+  // No backend call here on purpose — accounts live only in this browser's
+  // sessionStorage (see lib/sessionAccounts.ts). GET /api/accounts would
+  // return every account connected under the shared Outstand API key, not
+  // just the ones this visitor connected.
+  const refreshAccounts = useCallback(() => {
+    setAccounts(getSessionAccounts());
   }, []);
 
   useEffect(() => {
-    void loadAccounts();
-  }, [loadAccounts]);
+    refreshAccounts();
+  }, [refreshAccounts]);
 
   async function handleConnect() {
     setConnecting(true);
     try {
-      const data = await api.getConnectUrl('facebook');
-      window.open(data.authUrl, '_blank', 'noopener,noreferrer');
+      setPendingNetwork(network);
+      const redirectUri = `${window.location.origin}/oauth/callback`;
+      const data = await api.getConnectUrl(network, redirectUri);
+      // Same-tab navigation (not window.open): the OAuth round trip has to
+      // land back in this tab so it shares this tab's sessionStorage.
+      window.location.href = data.authUrl;
     } catch (err) {
+      setConnecting(false);
       window.alert(
         `Failed to start connect flow: ${err instanceof Error ? err.message : String(err)}`,
       );
-    } finally {
-      setConnecting(false);
     }
+  }
+
+  function handleRemove(accountId: string) {
+    setAccounts(removeSessionAccount(accountId));
   }
 
   async function handlePost(payload: {
@@ -75,11 +75,13 @@ export function HomePage() {
     <div className="wrap">
       <Header />
       <ConnectSection
+        network={network}
         connecting={connecting}
         onConnect={() => void handleConnect()}
-        onRefresh={() => void loadAccounts()}
+        onRefresh={refreshAccounts}
+        onNetworkChange={setNetwork}
       />
-      <AccountList accounts={accounts} loading={loading} error={error} />
+      <AccountList accounts={accounts} onRemove={handleRemove} />
       <ComposePostForm
         accounts={accounts}
         submitting={submitting}

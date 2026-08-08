@@ -41,8 +41,9 @@ export const api = {
     return request<AccountsResponse>(`/api/accounts?${qs}`);
   },
 
-  getConnectUrl(network = 'facebook') {
+  getConnectUrl(network = 'facebook', redirectUri?: string) {
     const qs = new URLSearchParams({ network });
+    if (redirectUri) qs.set('redirectUri', redirectUri);
     return request<ConnectUrlResponse>(`/api/connect-url?${qs}`);
   },
 

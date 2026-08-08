@@ -54,7 +54,7 @@ export function ComposePostForm({
           {!accounts.length && <option value="">No accounts</option>}
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>
-              {a.nickname || a.username} ({a.id})
+              [{a.network || 'unknown'}] {a.nickname || a.username || a.id} ({a.id})
             </option>
           ))}
         </select>

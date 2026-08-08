@@ -1,5 +1,6 @@
 import { BrowserRouter, NavLink, Route, Routes } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
+import { OAuthCallbackPage } from './pages/OAuthCallbackPage';
 import { SetupGuidePage } from './pages/SetupGuidePage';
 
 export default function App() {
@@ -13,8 +14,10 @@ export default function App() {
       </nav>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
         <Route path="/setup" element={<SetupGuidePage />} />
       </Routes>
     </BrowserRouter>
   );
 }
+

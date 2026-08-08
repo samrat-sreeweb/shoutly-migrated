@@ -15,22 +15,47 @@ export class NetworksService {
     return { success: true, ...(result as object) };
   }
 
+  private credentialsFromEnv(network: string): {
+    key: string;
+    secret: string;
+  } {
+    const n = network.toLowerCase();
+    if (n === 'x' || n === 'twitter') {
+      return {
+        key:
+          this.config.get<string>('X_CLIENT_ID') ||
+          this.config.get<string>('X_CONSUMER_KEY') ||
+          '',
+        secret:
+          this.config.get<string>('X_CLIENT_SECRET') ||
+          this.config.get<string>('X_SECRET_KEY') ||
+          '',
+      };
+    }
+    if (n === 'facebook' || n === 'instagram') {
+      return {
+        key: this.config.get<string>('FACEBOOK_APP_ID') || '',
+        secret: this.config.get<string>('FACEBOOK_APP_SECRET') || '',
+      };
+    }
+    return { key: '', secret: '' };
+  }
+
   async configure(dto: ConfigureNetworkDto) {
-    const clientKey =
-      dto.key || this.config.get<string>('FACEBOOK_APP_ID') || '';
-    const clientSecret =
-      dto.secret || this.config.get<string>('FACEBOOK_APP_SECRET') || '';
+    const fromEnv = this.credentialsFromEnv(dto.network);
+    const clientKey = dto.key || fromEnv.key;
+    const clientSecret = dto.secret || fromEnv.secret;
 
     if (!clientKey || !clientSecret) {
       throw new BadRequestException(
-        'Missing credentials. Pass key/secret in body, or set FACEBOOK_APP_ID / FACEBOOK_APP_SECRET in .env.',
+        `Missing credentials for "${dto.network}". Pass key/secret in body, or set the matching env vars (X_CONSUMER_KEY/X_SECRET_KEY or FACEBOOK_APP_ID/FACEBOOK_APP_SECRET).`,
       );
     }
 
     const result = await this.outstand.configureNetwork(
       dto.network,
-      clientKey,
-      clientSecret,
+      clientKey.trim(),
+      clientSecret.trim(),
     );
     return { success: true, ...(result as object) };
   }
