@@ -1,0 +1,27 @@
+# ShoutlyAI — Render Blueprint (NestJS API only; frontend deploys to Vercel)
+# Secrets use sync: false — set them in the Render Dashboard after first sync.
+# Schema: https://render.com/schema/render.yaml.json
+
+services:
+  - type: web
+    name: shoutly-api
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: OUTSTAND_BASE_URL
+        value: https://api.outstand.so
+      - key: OUTSTAND_API_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: FACEBOOK_APP_ID
+        sync: false
+      - key: FACEBOOK_APP_SECRET
+        sync: false
