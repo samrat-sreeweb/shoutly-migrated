@@ -261,6 +261,40 @@ form .btn {
   align-self: flex-start;
 }
 
+input[type='file'] {
+  padding: 8px;
+}
+
+.media-hint {
+  margin: 0;
+  font-size: 12.5px;
+}
+
+.youtube-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--code-bg) 80%, transparent);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.checkbox-row input {
+  width: auto;
+  margin: 0;
+}
+
 #post-result {
   margin-top: 14px;
   font-size: 14px;

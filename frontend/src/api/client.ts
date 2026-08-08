@@ -3,6 +3,7 @@ import type {
   ApiErrorBody,
   ConnectUrlResponse,
   CreatePostPayload,
+  MediaUploadResponse,
   PostResponse,
 } from './types';
 
@@ -13,7 +14,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
-      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(init?.body && !(init.body instanceof FormData)
+        ? { 'Content-Type': 'application/json' }
+        : {}),
       ...init?.headers,
     },
   });
@@ -45,6 +48,15 @@ export const api = {
     const qs = new URLSearchParams({ network });
     if (redirectUri) qs.set('redirectUri', redirectUri);
     return request<ConnectUrlResponse>(`/api/connect-url?${qs}`);
+  },
+
+  uploadMedia(file: File) {
+    const body = new FormData();
+    body.append('file', file);
+    return request<MediaUploadResponse>('/api/media/upload', {
+      method: 'POST',
+      body,
+    });
   },
 
   createPost(payload: CreatePostPayload) {

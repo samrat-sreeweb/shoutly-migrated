@@ -27,6 +27,7 @@ export class PostsService {
       ],
       accounts: accountIds,
       ...(dto.scheduledAt ? { scheduledAt: dto.scheduledAt } : {}),
+      ...(dto.youtube ? { youtube: dto.youtube } : {}),
     };
 
     const result = await this.outstand.createPost(payload);

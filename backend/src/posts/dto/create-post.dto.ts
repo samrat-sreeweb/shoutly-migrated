@@ -5,7 +5,38 @@ import {
   IsNotEmpty,
   ArrayMinSize,
   ValidateIf,
+  IsBoolean,
+  IsObject,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class YoutubeOverrideDto {
+  @IsOptional()
+  @IsBoolean()
+  isShort?: boolean;
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  privacyStatus?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  madeForKids?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @IsOptional()
+  @IsString()
+  title?: string;
+}
 
 /** Body shape matching old Express POST /api/post */
 export class CreatePostDto {
@@ -33,4 +64,11 @@ export class CreatePostDto {
   @IsOptional()
   @IsArray()
   media?: Array<{ url: string; filename?: string }>;
+
+  /** YouTube-specific overrides (top-level Outstand key) */
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => YoutubeOverrideDto)
+  youtube?: YoutubeOverrideDto;
 }

@@ -8,6 +8,17 @@ export interface SocialAccount {
 
 export interface Post {
   id: string;
+  publishedAt?: string | null;
+  scheduledAt?: string | null;
+  socialAccounts?: Array<{
+    id?: string;
+    network?: string;
+    username?: string;
+    status?: string;
+    error?: string | null;
+    platformPostId?: string | null;
+    platformPostUrl?: string | null;
+  }>;
   [key: string]: unknown;
 }
 
@@ -32,8 +43,30 @@ export interface PostResponse {
   post: Post;
 }
 
+export interface MediaUploadResponse {
+  success: true;
+  url: string;
+  filename: string;
+}
+
+export interface MediaRef {
+  url: string;
+  filename?: string;
+}
+
+export interface YoutubeOptions {
+  isShort?: boolean;
+  privacyStatus?: 'public' | 'private' | 'unlisted';
+  title?: string;
+  tags?: string[];
+  madeForKids?: boolean;
+  categoryId?: string;
+}
+
 export interface CreatePostPayload {
   accountId: string;
   content: string;
   scheduledAt?: string;
+  media?: MediaRef[];
+  youtube?: YoutubeOptions;
 }
