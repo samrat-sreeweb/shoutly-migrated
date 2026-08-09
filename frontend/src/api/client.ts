@@ -6,7 +6,9 @@ import type {
   ConnectUrlResponse,
   CreatePinterestBoardResponse,
   CreatePostPayload,
+  FinalizePendingResponse,
   MediaUploadResponse,
+  PendingConnectionResponse,
   PinterestBoardsResponse,
   PostResponse,
 } from './types';
@@ -98,6 +100,26 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+  },
+
+  // Facebook (and LinkedIn org pages) don't hand back a finished account on
+  // the OAuth callback — Outstand redirects with ?session=<token> and we
+  // have to fetch the list of connectable Pages, let the user pick, then
+  // finalize. See OAuthCallbackPage.tsx.
+  getPendingConnection(sessionToken: string) {
+    return request<PendingConnectionResponse>(
+      `/api/pending/${encodeURIComponent(sessionToken)}`,
+    );
+  },
+
+  finalizePendingConnection(sessionToken: string, selectedPageIds: string[]) {
+    return request<FinalizePendingResponse>(
+      `/api/pending/${encodeURIComponent(sessionToken)}/finalize`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ selectedPageIds }),
+      },
+    );
   },
 };
 

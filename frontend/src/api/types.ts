@@ -100,6 +100,28 @@ export interface ConnectBlueskyResponse {
   account: SocialAccount;
 }
 
+export interface AvailablePage {
+  id: string;
+  type?: string;
+  name?: string;
+  username?: string;
+  profilePictureUrl?: string;
+}
+
+export interface PendingConnectionResponse {
+  success: true;
+  data: {
+    network?: string;
+    expiresAt?: number;
+    availablePages: AvailablePage[];
+  };
+}
+
+export interface FinalizePendingResponse {
+  success: true;
+  connectedAccounts: SocialAccount[];
+}
+
 export interface CreatePostPayload {
   accountId: string;
   content: string;
