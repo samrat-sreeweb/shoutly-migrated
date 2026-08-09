@@ -6,8 +6,13 @@ const CALLBACKS = [
   { network: 'instagram', url: 'https://www.outstand.so/app/api/socials/instagram/callback' },
   { network: 'threads', url: 'https://www.outstand.so/app/api/socials/threads/callback' },
   { network: 'youtube', url: 'https://www.outstand.so/app/api/socials/youtube/callback' },
+  {
+    network: 'google_business',
+    url: 'https://www.outstand.so/app/api/socials/google-business/callback',
+  },
   { network: 'tiktok', url: 'https://www.outstand.so/app/api/socials/tiktok/callback' },
   { network: 'pinterest', url: 'https://www.outstand.so/app/api/socials/pinterest/callback' },
+  { network: 'linkedin', url: 'https://www.outstand.so/app/api/socials/linkedin/callback' },
 ];
 
 export function SetupGuidePage() {
@@ -119,6 +124,32 @@ export function SetupGuidePage() {
       </section>
 
       <section className="card">
+        <h2>Google Business Profile</h2>
+        <ol className="steps">
+          <li>
+            Google Cloud project with Business Profile API access approved by Google (allow-list
+            request required).
+          </li>
+          <li>
+            Enable: My Business Account Management, My Business Business Information, Google My
+            Business (legacy), and Business Profile Performance APIs.
+          </li>
+          <li>
+            Same Web OAuth client as YouTube is fine. Add redirect:{' '}
+            <code>https://www.outstand.so/app/api/socials/google-business/callback</code>
+          </li>
+          <li>
+            Env: <code>GOOGLE_CLIENT_ID</code> / <code>GOOGLE_CLIENT_SECRET</code> — register Outstand
+            network with <code>{`POST /api/networks { "network": "google_business" }`}</code>.
+          </li>
+          <li>
+            Connect picks verified locations via the multi-page <code>?session=</code> flow. Compose
+            supports Standard / Event / Offer plus optional CTA and photo.
+          </li>
+        </ol>
+      </section>
+
+      <section className="card">
         <h2>LinkedIn</h2>
         <ol className="steps">
           <li>
@@ -174,7 +205,7 @@ export function SetupGuidePage() {
         <ol className="steps">
           <li>
             <code>
-              GET /api/connect-url?network=linkedin|instagram|threads|youtube|pinterest|tiktok&amp;redirectUri=…
+              GET /api/connect-url?network=linkedin|instagram|threads|youtube|google_business|pinterest|tiktok&amp;redirectUri=…
             </code>
           </li>
           <li>

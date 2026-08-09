@@ -51,6 +51,9 @@ export class NetworksService {
           secret: get('THREAD_APP_SECRET', 'THREADS_APP_SECRET', 'FACEBOOK_APP_SECRET'),
         };
       case 'youtube':
+      case 'google_business':
+        // Same Google Cloud OAuth Web client can serve both; each needs its
+        // own Outstand redirect URI allow-listed on that client.
         return {
           key: get('GOOGLE_CLIENT_ID', 'YOUTUBE_CLIENT_ID'),
           secret: get('GOOGLE_CLIENT_SECRET', 'YOUTUBE_CLIENT_SECRET'),

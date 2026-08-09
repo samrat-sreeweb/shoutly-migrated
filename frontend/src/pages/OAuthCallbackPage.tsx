@@ -25,13 +25,14 @@ import type { AvailablePage } from '../api/types';
  * "idea testing" app; not something to build on for anything
  * security-sensitive.
  *
- * Facebook (and LinkedIn org pages) follow a THIRD shape entirely: Outstand
- * redirects here with only `?session=<token>` — no success/error/account_id
- * at all — because the connecting user may manage more than one Page and
- * Outstand needs us to ask which one(s) to connect. That token is fetched
- * via GET /api/pending/:session to list the candidate Pages, the user picks,
- * and POST /api/pending/:session/finalize creates the actual account(s).
- * See https://www.outstand.so/docs/configurations/facebook.
+ * Facebook, LinkedIn org pages, and Google Business locations follow a THIRD
+ * shape: Outstand redirects here with only `?session=<token>` — no
+ * success/error/account_id — because the connecting user may manage more than
+ * one Page/location and Outstand needs us to ask which one(s) to connect. That
+ * token is fetched via GET /api/pending/:session to list candidates, the user
+ * picks, and POST /api/pending/:session/finalize creates the account(s).
+ * See https://www.outstand.so/docs/configurations/facebook and
+ * https://www.outstand.so/docs/configurations/google-business.
  */
 type Status = 'resolving' | 'ok' | 'error' | 'selecting' | 'finalizing';
 

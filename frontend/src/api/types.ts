@@ -72,6 +72,28 @@ export interface PinterestOptions {
   cover_image_url?: string;
 }
 
+export interface GoogleBusinessCallToAction {
+  actionType: 'BOOK' | 'ORDER' | 'SHOP' | 'LEARN_MORE' | 'SIGN_UP' | 'CALL';
+  url?: string;
+}
+
+export interface GoogleBusinessOptions {
+  topicType?: 'STANDARD' | 'EVENT' | 'OFFER';
+  callToAction?: GoogleBusinessCallToAction;
+  event?: {
+    title: string;
+    startDate?: { year: number; month: number; day: number };
+    startTime?: { hours: number; minutes: number };
+    endDate?: { year: number; month: number; day: number };
+    endTime?: { hours: number; minutes: number };
+  };
+  offer?: {
+    couponCode?: string;
+    redeemOnlineUrl?: string;
+    termsConditions?: string;
+  };
+}
+
 export interface PinterestBoard {
   id: string;
   name?: string;
@@ -129,4 +151,5 @@ export interface CreatePostPayload {
   media?: MediaRef[];
   youtube?: YoutubeOptions;
   pinterest?: PinterestOptions;
+  google_business?: GoogleBusinessOptions;
 }

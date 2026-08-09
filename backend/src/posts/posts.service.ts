@@ -45,6 +45,7 @@ export class PostsService {
       ...(dto.scheduledAt ? { scheduledAt: dto.scheduledAt } : {}),
       ...(dto.youtube ? { youtube: dto.youtube } : {}),
       ...(dto.pinterest ? { pinterest: dto.pinterest } : {}),
+      ...(dto.google_business ? { google_business: dto.google_business } : {}),
     };
 
     const result = await this.outstand.createPost(payload);

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { api } from '../api/client';
 import type {
   CreatePostPayload,
+  GoogleBusinessOptions,
   PinterestBoard,
   PinterestOptions,
   SocialAccount,
@@ -45,6 +46,18 @@ export function ComposePostForm({
   const [boardsError, setBoardsError] = useState<string | null>(null);
   const [newBoardName, setNewBoardName] = useState('');
   const [creatingBoard, setCreatingBoard] = useState(false);
+  const [gbpTopic, setGbpTopic] =
+    useState<NonNullable<GoogleBusinessOptions['topicType']>>('STANDARD');
+  const [gbpCtaType, setGbpCtaType] = useState<
+    NonNullable<GoogleBusinessOptions['callToAction']>['actionType'] | ''
+  >('');
+  const [gbpCtaUrl, setGbpCtaUrl] = useState('');
+  const [gbpEventTitle, setGbpEventTitle] = useState('');
+  const [gbpEventStart, setGbpEventStart] = useState('');
+  const [gbpEventEnd, setGbpEventEnd] = useState('');
+  const [gbpCoupon, setGbpCoupon] = useState('');
+  const [gbpRedeemUrl, setGbpRedeemUrl] = useState('');
+  const [gbpTerms, setGbpTerms] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,6 +87,7 @@ export function ComposePostForm({
   const network = (selected?.network || '').toLowerCase();
   const isYoutube = network === 'youtube';
   const isPinterest = network === 'pinterest';
+  const isGoogleBusiness = network === 'google_business';
   const mediaRequired = isYoutube || isPinterest;
 
   useEffect(() => {
@@ -131,6 +145,23 @@ export function ComposePostForm({
     }
   }
 
+  function parseLocalDateTime(value: string) {
+    if (!value) return null;
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return null;
+    return {
+      date: {
+        year: d.getFullYear(),
+        month: d.getMonth() + 1,
+        day: d.getDate(),
+      },
+      time: {
+        hours: d.getHours(),
+        minutes: d.getMinutes(),
+      },
+    };
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setFormError(null);
@@ -162,6 +193,23 @@ export function ComposePostForm({
         setFormError('Select or create a Pinterest board before publishing.');
         return;
       }
+    } else if (isGoogleBusiness) {
+      if (file && !isImageFile(file)) {
+        setFormError('Google Business Profile posts accept photo media (JPG/PNG) only.');
+        return;
+      }
+      if (gbpTopic === 'EVENT' && !gbpEventTitle.trim()) {
+        setFormError('Event posts need an event title.');
+        return;
+      }
+      if (gbpTopic === 'EVENT' && !gbpEventStart) {
+        setFormError('Event posts need a start date/time.');
+        return;
+      }
+      if (gbpCtaType && gbpCtaType !== 'CALL' && !gbpCtaUrl.trim()) {
+        setFormError('CTA buttons other than CALL need a URL.');
+        return;
+      }
     } else if (file && !isImageFile(file) && !isVideoFile(file)) {
       setFormError('Attach an image or video file.');
       return;
@@ -188,31 +236,67 @@ export function ComposePostForm({
         }
       : undefined;
 
+    let google_business: GoogleBusinessOptions | undefined;
+    if (isGoogleBusiness) {
+      google_business = { topicType: gbpTopic };
+      if (gbpCtaType) {
+        google_business.callToAction = {
+          actionType: gbpCtaType,
+          ...(gbpCtaUrl.trim() ? { url: gbpCtaUrl.trim() } : {}),
+        };
+      }
+      if (gbpTopic === 'EVENT') {
+        const start = parseLocalDateTime(gbpEventStart);
+        const end = parseLocalDateTime(gbpEventEnd);
+        google_business.event = {
+          title: gbpEventTitle.trim(),
+          ...(start
+            ? { startDate: start.date, startTime: start.time }
+            : {}),
+          ...(end ? { endDate: end.date, endTime: end.time } : {}),
+        };
+      }
+      if (gbpTopic === 'OFFER') {
+        google_business.offer = {
+          ...(gbpCoupon.trim() ? { couponCode: gbpCoupon.trim() } : {}),
+          ...(gbpRedeemUrl.trim() ? { redeemOnlineUrl: gbpRedeemUrl.trim() } : {}),
+          ...(gbpTerms.trim() ? { termsConditions: gbpTerms.trim() } : {}),
+        };
+      }
+    }
+
     await onSubmit({
       accountId: effectiveAccountId,
       content: content.trim(),
       scheduledAt,
       youtube,
       pinterest,
+      google_business,
       file: file || undefined,
     });
   }
 
   const accept = isYoutube
     ? 'video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm'
-    : 'image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,.jpg,.jpeg,.png,.gif,.webp,.mp4,.mov';
+    : isGoogleBusiness
+      ? 'image/jpeg,image/png,.jpg,.jpeg,.png'
+      : 'image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,.jpg,.jpeg,.png,.gif,.webp,.mp4,.mov';
 
   const mediaLabel = isYoutube
     ? 'Video file (required)'
     : isPinterest
       ? 'Pin media (required — image or video)'
-      : 'Media file (optional)';
+      : isGoogleBusiness
+        ? 'Photo (optional — JPG/PNG)'
+        : 'Media file (optional)';
 
   const emptyMediaHint = isYoutube
     ? 'No video selected yet — YouTube requires a video file.'
     : isPinterest
       ? 'No media selected — Pinterest Pins require an image or video.'
-      : 'No media attached — this post will be text-only.';
+      : isGoogleBusiness
+        ? 'No photo attached — text-only local post.'
+        : 'No media attached — this post will be text-only.';
 
   return (
     <section className="card">
@@ -222,7 +306,9 @@ export function ComposePostForm({
           ? 'YouTube needs a video file. Text becomes the description; optional title/Shorts settings below.'
           : isPinterest
             ? 'Pinterest needs media plus a board. Description is the Pin text; title, link, and alt text are optional.'
-            : 'Optional media: images or short videos work for most networks. Leave empty for text-only.'}
+            : isGoogleBusiness
+              ? 'Google Business local posts: choose Standard / Event / Offer, optional CTA and photo (JPG/PNG).'
+              : 'Optional media: images or short videos work for most networks. Leave empty for text-only.'}
       </p>
       <form onSubmit={(e) => void handleSubmit(e)}>
         <label htmlFor="account-select">Post as</label>
@@ -254,7 +340,9 @@ export function ComposePostForm({
               ? 'Video description…'
               : isPinterest
                 ? 'Pin description…'
-                : 'What do you want to publish?'
+                : isGoogleBusiness
+                  ? 'Local post text (max ~1,500 characters)…'
+                  : 'What do you want to publish?'
           }
           required
           value={content}
@@ -387,6 +475,112 @@ export function ComposePostForm({
               value={pinAltText}
               onChange={(e) => setPinAltText(e.target.value)}
             />
+          </div>
+        )}
+
+        {isGoogleBusiness && (
+          <div className="network-options">
+            <label htmlFor="gbp-topic">Post type</label>
+            <select
+              id="gbp-topic"
+              value={gbpTopic}
+              onChange={(e) =>
+                setGbpTopic(e.target.value as NonNullable<GoogleBusinessOptions['topicType']>)
+              }
+            >
+              <option value="STANDARD">Standard</option>
+              <option value="EVENT">Event</option>
+              <option value="OFFER">Offer</option>
+            </select>
+
+            <label htmlFor="gbp-cta">Call to action (optional)</label>
+            <select
+              id="gbp-cta"
+              value={gbpCtaType}
+              onChange={(e) =>
+                setGbpCtaType(
+                  e.target.value as
+                    | NonNullable<GoogleBusinessOptions['callToAction']>['actionType']
+                    | '',
+                )
+              }
+            >
+              <option value="">None</option>
+              <option value="LEARN_MORE">Learn more</option>
+              <option value="BOOK">Book</option>
+              <option value="ORDER">Order</option>
+              <option value="SHOP">Shop</option>
+              <option value="SIGN_UP">Sign up</option>
+              <option value="CALL">Call</option>
+            </select>
+
+            {gbpCtaType && gbpCtaType !== 'CALL' && (
+              <>
+                <label htmlFor="gbp-cta-url">CTA URL</label>
+                <input
+                  id="gbp-cta-url"
+                  type="url"
+                  placeholder="https://example.com"
+                  value={gbpCtaUrl}
+                  onChange={(e) => setGbpCtaUrl(e.target.value)}
+                />
+              </>
+            )}
+
+            {gbpTopic === 'EVENT' && (
+              <>
+                <label htmlFor="gbp-event-title">Event title</label>
+                <input
+                  id="gbp-event-title"
+                  type="text"
+                  required
+                  value={gbpEventTitle}
+                  onChange={(e) => setGbpEventTitle(e.target.value)}
+                />
+                <label htmlFor="gbp-event-start">Starts</label>
+                <input
+                  id="gbp-event-start"
+                  type="datetime-local"
+                  required
+                  value={gbpEventStart}
+                  onChange={(e) => setGbpEventStart(e.target.value)}
+                />
+                <label htmlFor="gbp-event-end">Ends (optional)</label>
+                <input
+                  id="gbp-event-end"
+                  type="datetime-local"
+                  value={gbpEventEnd}
+                  onChange={(e) => setGbpEventEnd(e.target.value)}
+                />
+              </>
+            )}
+
+            {gbpTopic === 'OFFER' && (
+              <>
+                <label htmlFor="gbp-coupon">Coupon code (optional)</label>
+                <input
+                  id="gbp-coupon"
+                  type="text"
+                  value={gbpCoupon}
+                  onChange={(e) => setGbpCoupon(e.target.value)}
+                />
+                <label htmlFor="gbp-redeem">Redeem URL (optional)</label>
+                <input
+                  id="gbp-redeem"
+                  type="url"
+                  placeholder="https://example.com/redeem"
+                  value={gbpRedeemUrl}
+                  onChange={(e) => setGbpRedeemUrl(e.target.value)}
+                />
+                <label htmlFor="gbp-terms">Terms (optional)</label>
+                <input
+                  id="gbp-terms"
+                  type="text"
+                  value={gbpTerms}
+                  onChange={(e) => setGbpTerms(e.target.value)}
+                />
+              </>
+            )}
           </div>
         )}
 

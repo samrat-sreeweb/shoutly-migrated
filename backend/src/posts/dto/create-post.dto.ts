@@ -10,6 +10,9 @@ import {
   ValidateNested,
   IsUrl,
   Matches,
+  IsInt,
+  Min,
+  Max,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
@@ -86,6 +89,118 @@ export class PinterestOverrideDto {
   title?: string;
 }
 
+export class GoogleBusinessCallToActionDto {
+  @IsString()
+  @IsNotEmpty()
+  actionType!: string;
+
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  url?: string;
+}
+
+export class GoogleBusinessDateDto {
+  @IsOptional()
+  @IsInt()
+  @Min(2000)
+  @Max(2100)
+  year?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  month?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(31)
+  day?: number;
+}
+
+export class GoogleBusinessTimeDto {
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(23)
+  hours?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(59)
+  minutes?: number;
+}
+
+export class GoogleBusinessEventDto {
+  @IsString()
+  @IsNotEmpty()
+  title!: string;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => GoogleBusinessDateDto)
+  startDate?: GoogleBusinessDateDto;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => GoogleBusinessTimeDto)
+  startTime?: GoogleBusinessTimeDto;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => GoogleBusinessDateDto)
+  endDate?: GoogleBusinessDateDto;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => GoogleBusinessTimeDto)
+  endTime?: GoogleBusinessTimeDto;
+}
+
+export class GoogleBusinessOfferDto {
+  @IsOptional()
+  @IsString()
+  couponCode?: string;
+
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  redeemOnlineUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  termsConditions?: string;
+}
+
+export class GoogleBusinessOverrideDto {
+  @IsOptional()
+  @IsString()
+  topicType?: string;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => GoogleBusinessCallToActionDto)
+  callToAction?: GoogleBusinessCallToActionDto;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => GoogleBusinessEventDto)
+  event?: GoogleBusinessEventDto;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => GoogleBusinessOfferDto)
+  offer?: GoogleBusinessOfferDto;
+}
+
 /** Body shape matching old Express POST /api/post */
 export class CreatePostDto {
   /** Single account (legacy web UI shape) */
@@ -128,4 +243,11 @@ export class CreatePostDto {
   @ValidateNested()
   @Type(() => PinterestOverrideDto)
   pinterest?: PinterestOverrideDto;
+
+  /** Google Business Profile overrides (top-level Outstand key) */
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => GoogleBusinessOverrideDto)
+  google_business?: GoogleBusinessOverrideDto;
 }

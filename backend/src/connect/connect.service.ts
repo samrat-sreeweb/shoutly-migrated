@@ -37,6 +37,16 @@ export class ConnectService {
       sessionToken,
       selectedPageIds,
     );
-    return { success: true, ...(result as object) };
+    const raw = result as {
+      data?: unknown;
+      connectedAccounts?: unknown;
+      accounts?: unknown;
+    };
+    const connectedAccounts =
+      raw.connectedAccounts ??
+      raw.accounts ??
+      (Array.isArray(raw.data) ? raw.data : undefined) ??
+      [];
+    return { success: true, connectedAccounts, ...(result as object) };
   }
 }
