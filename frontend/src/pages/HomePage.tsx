@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/client';
 import type { CreatePostPayload, Post, SocialAccount } from '../api/types';
 import { AccountList } from '../components/AccountList';
-import { BlueskyConnectForm } from '../components/BlueskyConnectForm';
 import { ComposePostForm } from '../components/ComposePostForm';
 import { ConnectSection } from '../components/ConnectSection';
 import { Header } from '../components/Header';
@@ -90,6 +89,7 @@ export function HomePage() {
   }, [refreshAccounts]);
 
   async function handleConnect() {
+    if (network === 'bluesky') return;
     setConnecting(true);
     try {
       setPendingNetwork(network);
@@ -157,8 +157,8 @@ export function HomePage() {
         onConnect={() => void handleConnect()}
         onRefresh={refreshAccounts}
         onNetworkChange={setNetwork}
+        onBlueskyConnected={handleBlueskyConnected}
       />
-      <BlueskyConnectForm onConnected={handleBlueskyConnected} />
       <AccountList accounts={accounts} onRemove={handleRemove} />
       <ComposePostForm
         accounts={accounts}

@@ -4,6 +4,8 @@ import type { SocialAccount } from '../api/types';
 
 interface BlueskyConnectFormProps {
   onConnected: (account: SocialAccount) => void;
+  /** When true, render fields only (parent already provides the card). */
+  embedded?: boolean;
 }
 
 /**
@@ -13,7 +15,10 @@ interface BlueskyConnectFormProps {
  * directly by whoever owns the account, straight into the request — it's
  * never hardcoded, stored, or passed through any other hand along the way.
  */
-export function BlueskyConnectForm({ onConnected }: BlueskyConnectFormProps) {
+export function BlueskyConnectForm({
+  onConnected,
+  embedded = false,
+}: BlueskyConnectFormProps) {
   const [handle, setHandle] = useState('');
   const [appPassword, setAppPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -52,17 +57,18 @@ export function BlueskyConnectForm({ onConnected }: BlueskyConnectFormProps) {
     }
   }
 
-  return (
-    <section className="card">
-      <h2>2b. Connect Bluesky</h2>
-      <p className="muted">
-        Bluesky doesn't use OAuth — create an app password at{' '}
-        <a href="https://bsky.app/settings/app-passwords" target="_blank" rel="noreferrer">
-          bsky.app/settings/app-passwords
-        </a>{' '}
-        and enter it below (not your main Bluesky password). It's sent once to connect and isn't
-        stored by this app.
-      </p>
+  const fields = (
+    <>
+      {!embedded && (
+        <p className="muted">
+          Bluesky doesn&apos;t use OAuth — create an app password at{' '}
+          <a href="https://bsky.app/settings/app-passwords" target="_blank" rel="noreferrer">
+            bsky.app/settings/app-passwords
+          </a>{' '}
+          (not your main Bluesky password). It&apos;s sent once to connect and isn&apos;t stored by
+          this app.
+        </p>
+      )}
       <form onSubmit={(e) => void handleSubmit(e)}>
         <label htmlFor="bsky-handle">Handle</label>
         <input
@@ -93,6 +99,15 @@ export function BlueskyConnectForm({ onConnected }: BlueskyConnectFormProps) {
           {submitting ? 'Connecting…' : 'Connect Bluesky'}
         </button>
       </form>
+    </>
+  );
+
+  if (embedded) return <div className="bluesky-embed">{fields}</div>;
+
+  return (
+    <section className="card">
+      <h2>Connect Bluesky</h2>
+      {fields}
     </section>
   );
 }
