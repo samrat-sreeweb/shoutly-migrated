@@ -25,3 +25,23 @@ services:
         sync: false
       - key: FACEBOOK_APP_SECRET
         sync: false
+      - key: PINTEREST_APP_ID
+        sync: false
+      - key: PINTEREST_APP_SECRET
+        sync: false
+      - key: TIKTOK_CLIENT_KEY
+        sync: false
+      - key: TIKTOK_CLIENT_SECRET
+        sync: false
+      - key: INSTAGRAM_APP_ID
+        sync: false
+      - key: INSTAGRAM_APP_SECRET
+        sync: false
+      - key: THREAD_APP_ID
+        sync: false
+      - key: THREAD_APP_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false

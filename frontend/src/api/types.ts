@@ -64,10 +64,37 @@ export interface YoutubeOptions {
   categoryId?: string;
 }
 
+export interface PinterestOptions {
+  board_id: string;
+  title?: string;
+  link?: string;
+  alt_text?: string;
+  cover_image_url?: string;
+}
+
+export interface PinterestBoard {
+  id: string;
+  name?: string;
+  privacy?: string;
+  description?: string;
+  pin_count?: number;
+}
+
+export interface PinterestBoardsResponse {
+  success: true;
+  boards: PinterestBoard[];
+}
+
+export interface CreatePinterestBoardResponse {
+  success: true;
+  board: PinterestBoard;
+}
+
 export interface CreatePostPayload {
   accountId: string;
   content: string;
   scheduledAt?: string;
   media?: MediaRef[];
   youtube?: YoutubeOptions;
+  pinterest?: PinterestOptions;
 }

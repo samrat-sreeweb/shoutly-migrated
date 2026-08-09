@@ -270,7 +270,8 @@ input[type='file'] {
   font-size: 12.5px;
 }
 
-.youtube-options {
+.youtube-options,
+.network-options {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -279,6 +280,15 @@ input[type='file'] {
   border: 1px solid var(--panel-border);
   border-radius: 8px;
   background: color-mix(in srgb, var(--code-bg) 80%, transparent);
+}
+
+.board-create-row {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.board-create-row input {
+  flex: 1;
 }
 
 .checkbox-row {

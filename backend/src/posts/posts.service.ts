@@ -18,6 +18,16 @@ export class PostsService {
       throw new BadRequestException('accountId (or accounts) and content are required');
     }
 
+    if (dto.pinterest && !dto.media?.length) {
+      throw new BadRequestException(
+        'Pinterest Pins require media (image or video). Upload via /api/media/upload first.',
+      );
+    }
+
+    if (dto.pinterest && !dto.pinterest.board_id?.trim()) {
+      throw new BadRequestException('pinterest.board_id is required');
+    }
+
     const payload: Record<string, unknown> = {
       containers: [
         {
@@ -28,6 +38,7 @@ export class PostsService {
       accounts: accountIds,
       ...(dto.scheduledAt ? { scheduledAt: dto.scheduledAt } : {}),
       ...(dto.youtube ? { youtube: dto.youtube } : {}),
+      ...(dto.pinterest ? { pinterest: dto.pinterest } : {}),
     };
 
     const result = await this.outstand.createPost(payload);

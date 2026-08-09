@@ -2,8 +2,10 @@ import type {
   AccountsResponse,
   ApiErrorBody,
   ConnectUrlResponse,
+  CreatePinterestBoardResponse,
   CreatePostPayload,
   MediaUploadResponse,
+  PinterestBoardsResponse,
   PostResponse,
 } from './types';
 
@@ -68,6 +70,22 @@ export const api = {
 
   getPost(id: string) {
     return request<PostResponse>(`/api/posts/${encodeURIComponent(id)}`);
+  },
+
+  listPinterestBoards(accountId: string) {
+    return request<PinterestBoardsResponse>(
+      `/api/accounts/${encodeURIComponent(accountId)}/pinterest/boards`,
+    );
+  },
+
+  createPinterestBoard(accountId: string, name: string) {
+    return request<CreatePinterestBoardResponse>(
+      `/api/accounts/${encodeURIComponent(accountId)}/pinterest/boards`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ name, privacy: 'PUBLIC' }),
+      },
+    );
   },
 };
 

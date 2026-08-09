@@ -156,6 +156,24 @@ export class OutstandService {
     });
   }
 
+  // ---- Pinterest ----
+  listPinterestBoards(accountId: string) {
+    return this.request('GET', `/v1/pinterest/accounts/${accountId}/boards`);
+  }
+
+  createPinterestBoard(
+    accountId: string,
+    body: { name: string; privacy?: string; description?: string },
+  ) {
+    return this.request('POST', `/v1/pinterest/accounts/${accountId}/boards`, {
+      body,
+    });
+  }
+
+  getPinterestProfile(accountId: string) {
+    return this.request('GET', `/v1/pinterest/accounts/${accountId}/profile`);
+  }
+
   // ---- Media ----
   requestUploadUrl(filename: string, contentType: string) {
     return this.request<{

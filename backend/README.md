@@ -72,6 +72,8 @@ Also accepts `"accounts": ["L0CCV", "X2GJe"]` and optional `"media": [{ "url": "
 | `GET` | `/api/networks` | List BYOK network credentials |
 | `POST` | `/api/networks` | Register BYOK credentials `{ network, key?, secret? }` |
 | `DELETE` | `/api/networks/:id` | Delete a BYOK entry |
+| `GET` | `/api/accounts/:id/pinterest/boards` | List Pinterest boards for an account |
+| `POST` | `/api/accounts/:id/pinterest/boards` | Create a Pinterest board `{ name, privacy? }` |
 | `GET` | `/api/accounts/:id/metrics` | Account metrics |
 | `GET` | `/api/accounts/:id/health` | Account health |
 | `DELETE` | `/api/accounts/:id` | Disconnect account |

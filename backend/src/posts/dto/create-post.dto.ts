@@ -48,6 +48,28 @@ export class YoutubeOverrideDto {
   title?: string;
 }
 
+export class PinterestOverrideDto {
+  @IsString()
+  @IsNotEmpty()
+  board_id!: string;
+
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  cover_image_url?: string;
+
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  link?: string;
+
+  @IsOptional()
+  @IsString()
+  alt_text?: string;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
+}
+
 /** Body shape matching old Express POST /api/post */
 export class CreatePostDto {
   /** Single account (legacy web UI shape) */
@@ -83,4 +105,11 @@ export class CreatePostDto {
   @ValidateNested()
   @Type(() => YoutubeOverrideDto)
   youtube?: YoutubeOverrideDto;
+
+  /** Pinterest-specific overrides (top-level Outstand key; board_id required) */
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => PinterestOverrideDto)
+  pinterest?: PinterestOverrideDto;
 }

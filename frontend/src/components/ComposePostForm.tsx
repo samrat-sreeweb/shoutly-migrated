@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import type { CreatePostPayload, SocialAccount, YoutubeOptions } from '../api/types';
+import { api } from '../api/client';
+import type {
+  CreatePostPayload,
+  PinterestBoard,
+  PinterestOptions,
+  SocialAccount,
+  YoutubeOptions,
+} from '../api/types';
 
 interface ComposePostFormProps {
   accounts: SocialAccount[];
@@ -29,6 +36,15 @@ export function ComposePostForm({
   const [ytTitle, setYtTitle] = useState('');
   const [ytIsShort, setYtIsShort] = useState(true);
   const [ytPrivacy, setYtPrivacy] = useState<YoutubeOptions['privacyStatus']>('public');
+  const [pinBoardId, setPinBoardId] = useState('');
+  const [pinTitle, setPinTitle] = useState('');
+  const [pinLink, setPinLink] = useState('');
+  const [pinAltText, setPinAltText] = useState('');
+  const [boards, setBoards] = useState<PinterestBoard[]>([]);
+  const [boardsLoading, setBoardsLoading] = useState(false);
+  const [boardsError, setBoardsError] = useState<string | null>(null);
+  const [newBoardName, setNewBoardName] = useState('');
+  const [creatingBoard, setCreatingBoard] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,6 +73,63 @@ export function ComposePostForm({
   );
   const network = (selected?.network || '').toLowerCase();
   const isYoutube = network === 'youtube';
+  const isPinterest = network === 'pinterest';
+  const mediaRequired = isYoutube || isPinterest;
+
+  useEffect(() => {
+    if (!isPinterest || !effectiveAccountId) {
+      setBoards([]);
+      setBoardsError(null);
+      setPinBoardId('');
+      return;
+    }
+
+    let cancelled = false;
+    setBoardsLoading(true);
+    setBoardsError(null);
+    api
+      .listPinterestBoards(effectiveAccountId)
+      .then((res) => {
+        if (cancelled) return;
+        const list = res.boards ?? [];
+        setBoards(list);
+        setPinBoardId((prev) => prev || list[0]?.id || '');
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setBoards([]);
+        setBoardsError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (!cancelled) setBoardsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isPinterest, effectiveAccountId]);
+
+  async function handleCreateBoard() {
+    const name = newBoardName.trim();
+    if (!name || !effectiveAccountId) return;
+    setCreatingBoard(true);
+    setFormError(null);
+    try {
+      const { board } = await api.createPinterestBoard(effectiveAccountId, name);
+      setBoards((prev) => {
+        if (prev.some((b) => b.id === board.id)) return prev;
+        return [board, ...prev];
+      });
+      setPinBoardId(board.id);
+      setNewBoardName('');
+    } catch (err) {
+      setFormError(
+        `Could not create board: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    } finally {
+      setCreatingBoard(false);
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -76,6 +149,19 @@ export function ComposePostForm({
         setFormError('YouTube only accepts video files (e.g. MP4, MOV).');
         return;
       }
+    } else if (isPinterest) {
+      if (!file) {
+        setFormError('Pinterest Pins require an image or video file.');
+        return;
+      }
+      if (!isImageFile(file) && !isVideoFile(file)) {
+        setFormError('Pinterest accepts image or video files only.');
+        return;
+      }
+      if (!pinBoardId.trim()) {
+        setFormError('Select or create a Pinterest board before publishing.');
+        return;
+      }
     } else if (file && !isImageFile(file) && !isVideoFile(file)) {
       setFormError('Attach an image or video file.');
       return;
@@ -93,11 +179,21 @@ export function ComposePostForm({
         }
       : undefined;
 
+    const pinterest: PinterestOptions | undefined = isPinterest
+      ? {
+          board_id: pinBoardId.trim(),
+          ...(pinTitle.trim() ? { title: pinTitle.trim() } : {}),
+          ...(pinLink.trim() ? { link: pinLink.trim() } : {}),
+          ...(pinAltText.trim() ? { alt_text: pinAltText.trim() } : {}),
+        }
+      : undefined;
+
     await onSubmit({
       accountId: effectiveAccountId,
       content: content.trim(),
       scheduledAt,
       youtube,
+      pinterest,
       file: file || undefined,
     });
   }
@@ -106,13 +202,27 @@ export function ComposePostForm({
     ? 'video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm'
     : 'image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,.jpg,.jpeg,.png,.gif,.webp,.mp4,.mov';
 
+  const mediaLabel = isYoutube
+    ? 'Video file (required)'
+    : isPinterest
+      ? 'Pin media (required — image or video)'
+      : 'Media file (optional)';
+
+  const emptyMediaHint = isYoutube
+    ? 'No video selected yet — YouTube requires a video file.'
+    : isPinterest
+      ? 'No media selected — Pinterest Pins require an image or video.'
+      : 'No media attached — this post will be text-only.';
+
   return (
     <section className="card">
       <h2>3. Compose &amp; Post</h2>
       <p className="muted">
         {isYoutube
           ? 'YouTube needs a video file. Text becomes the description; optional title/Shorts settings below.'
-          : 'Optional media: images or short videos work for most networks. Leave empty for text-only.'}
+          : isPinterest
+            ? 'Pinterest needs media plus a board. Description is the Pin text; title, link, and alt text are optional.'
+            : 'Optional media: images or short videos work for most networks. Leave empty for text-only.'}
       </p>
       <form onSubmit={(e) => void handleSubmit(e)}>
         <label htmlFor="account-select">Post as</label>
@@ -139,21 +249,25 @@ export function ComposePostForm({
         <textarea
           id="content"
           rows={4}
-          placeholder={isYoutube ? 'Video description…' : 'What do you want to publish?'}
+          placeholder={
+            isYoutube
+              ? 'Video description…'
+              : isPinterest
+                ? 'Pin description…'
+                : 'What do you want to publish?'
+          }
           required
           value={content}
           onChange={(e) => setContent(e.target.value)}
         />
 
-        <label htmlFor="media-file">
-          {isYoutube ? 'Video file (required)' : 'Media file (optional)'}
-        </label>
+        <label htmlFor="media-file">{mediaLabel}</label>
         <input
           id="media-file"
           type="file"
           ref={fileInputRef}
           accept={accept}
-          required={isYoutube}
+          required={mediaRequired}
           onChange={(e) => {
             setFile(e.target.files?.[0] ?? null);
             setFormError(null);
@@ -164,15 +278,11 @@ export function ComposePostForm({
             Selected: {file.name} ({Math.round(file.size / 1024)} KB)
           </p>
         ) : (
-          <p className="muted media-hint">
-            {isYoutube
-              ? 'No video selected yet — YouTube requires a video file.'
-              : 'No media attached — this post will be text-only.'}
-          </p>
+          <p className="muted media-hint">{emptyMediaHint}</p>
         )}
 
         {isYoutube && (
-          <div className="youtube-options">
+          <div className="network-options">
             <label htmlFor="yt-title">YouTube title (optional)</label>
             <input
               id="yt-title"
@@ -205,6 +315,78 @@ export function ComposePostForm({
               />
               Publish as YouTube Short
             </label>
+          </div>
+        )}
+
+        {isPinterest && (
+          <div className="network-options">
+            <label htmlFor="pin-board">Board</label>
+            <select
+              id="pin-board"
+              required
+              value={pinBoardId}
+              onChange={(e) => setPinBoardId(e.target.value)}
+              disabled={boardsLoading || (!boards.length && !pinBoardId)}
+            >
+              {!boards.length && (
+                <option value="">
+                  {boardsLoading ? 'Loading boards…' : 'No boards yet — create one below'}
+                </option>
+              )}
+              {boards.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name || b.id}
+                </option>
+              ))}
+            </select>
+            {boardsError && <p className="result-err">{boardsError}</p>}
+
+            <div className="row board-create-row">
+              <input
+                type="text"
+                placeholder="New board name"
+                value={newBoardName}
+                onChange={(e) => setNewBoardName(e.target.value)}
+                disabled={creatingBoard}
+              />
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={creatingBoard || !newBoardName.trim()}
+                onClick={() => void handleCreateBoard()}
+              >
+                {creatingBoard ? 'Creating…' : 'Create board'}
+              </button>
+            </div>
+
+            <label htmlFor="pin-title">Pin title (optional)</label>
+            <input
+              id="pin-title"
+              type="text"
+              maxLength={100}
+              placeholder="Shown on the Pin"
+              value={pinTitle}
+              onChange={(e) => setPinTitle(e.target.value)}
+            />
+
+            <label htmlFor="pin-link">Destination link (optional)</label>
+            <input
+              id="pin-link"
+              type="url"
+              placeholder="https://example.com/product"
+              value={pinLink}
+              onChange={(e) => setPinLink(e.target.value)}
+            />
+
+            <label htmlFor="pin-alt">Alt text (optional)</label>
+            <input
+              id="pin-alt"
+              type="text"
+              maxLength={500}
+              placeholder="Describe the image for accessibility"
+              value={pinAltText}
+              onChange={(e) => setPinAltText(e.target.value)}
+            />
           </div>
         )}
 

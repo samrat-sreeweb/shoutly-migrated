@@ -6,6 +6,8 @@ const CALLBACKS = [
   { network: 'instagram', url: 'https://www.outstand.so/app/api/socials/instagram/callback' },
   { network: 'threads', url: 'https://www.outstand.so/app/api/socials/threads/callback' },
   { network: 'youtube', url: 'https://www.outstand.so/app/api/socials/youtube/callback' },
+  { network: 'tiktok', url: 'https://www.outstand.so/app/api/socials/tiktok/callback' },
+  { network: 'pinterest', url: 'https://www.outstand.so/app/api/socials/pinterest/callback' },
 ];
 
 export function SetupGuidePage() {
@@ -92,17 +94,45 @@ export function SetupGuidePage() {
       </section>
 
       <section className="card">
+        <h2>Pinterest</h2>
+        <ol className="steps">
+          <li>Pinterest business account + developer app with pin write scopes.</li>
+          <li>
+            OAuth redirect:{' '}
+            <code>https://www.outstand.so/app/api/socials/pinterest/callback</code>
+          </li>
+          <li>
+            Env: <code>PINTEREST_APP_ID</code> / <code>PINTEREST_APP_SECRET</code> (Outstand network{' '}
+            <code>pinterest</code>).
+          </li>
+          <li>
+            Every Pin needs media (image or video) plus a <code>board_id</code>. Use{' '}
+            <code>GET/POST /api/accounts/:id/pinterest/boards</code> to list or create boards, then
+            pass top-level <code>pinterest</code> options (<code>board_id</code>, optional{' '}
+            <code>title</code>, <code>link</code>, <code>alt_text</code>).
+          </li>
+          <li>
+            Upload media via <code>POST /api/media/upload</code> first — Outstand handles Pinterest
+            video upload-slot plumbing when you pass the returned public URL.
+          </li>
+        </ol>
+      </section>
+
+      <section className="card">
         <h2>API routes</h2>
         <ol className="steps">
           <li>
-            <code>GET /api/connect-url?network=instagram|threads|youtube&amp;redirectUri=…</code>
+            <code>
+              GET /api/connect-url?network=instagram|threads|youtube|pinterest|tiktok&amp;redirectUri=…
+            </code>
           </li>
           <li>
             <code>POST /api/networks</code> with <code>{`{ "network": "…" }`}</code> to (re)register
             BYOK from env.
           </li>
           <li>
-            <code>POST /api/post</code> with a specific account ID after OAuth.
+            <code>POST /api/media/upload</code> then <code>POST /api/post</code> with account ID +
+            media URL (required for Pinterest / YouTube).
           </li>
         </ol>
       </section>

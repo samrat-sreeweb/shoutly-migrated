@@ -27,4 +27,27 @@ export class AccountsService {
     await this.outstand.deleteSocialAccount(accountId);
     return { success: true };
   }
+
+  async listPinterestBoards(accountId: string) {
+    const result = await this.outstand.listPinterestBoards(accountId);
+    const data =
+      (result as { data?: unknown[]; boards?: unknown[] }).data ??
+      (result as { boards?: unknown[] }).boards ??
+      [];
+    return { success: true, boards: data };
+  }
+
+  async createPinterestBoard(
+    accountId: string,
+    body: { name: string; privacy?: string; description?: string },
+  ) {
+    const result = await this.outstand.createPinterestBoard(accountId, {
+      name: body.name.trim(),
+      ...(body.privacy ? { privacy: body.privacy } : { privacy: 'PUBLIC' }),
+      ...(body.description ? { description: body.description } : {}),
+    });
+    const board =
+      (result as { data?: unknown }).data ?? result;
+    return { success: true, board };
+  }
 }

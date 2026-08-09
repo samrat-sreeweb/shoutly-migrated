@@ -55,6 +55,16 @@ export class NetworksService {
           key: get('GOOGLE_CLIENT_ID', 'YOUTUBE_CLIENT_ID'),
           secret: get('GOOGLE_CLIENT_SECRET', 'YOUTUBE_CLIENT_SECRET'),
         };
+      case 'pinterest':
+        return {
+          key: get('PINTEREST_APP_ID', 'PINTEREST_CLIENT_ID'),
+          secret: get('PINTEREST_APP_SECRET', 'PINTEREST_CLIENT_SECRET'),
+        };
+      case 'tiktok':
+        return {
+          key: get('TIKTOK_CLIENT_KEY', 'TIKTOK_CLIENT_ID'),
+          secret: get('TIKTOK_CLIENT_SECRET'),
+        };
       default:
         return { key: '', secret: '' };
     }
