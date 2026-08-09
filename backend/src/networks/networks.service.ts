@@ -65,6 +65,13 @@ export class NetworksService {
           key: get('TIKTOK_CLIENT_KEY', 'TIKTOK_CLIENT_ID'),
           secret: get('TIKTOK_CLIENT_SECRET'),
         };
+      case 'bluesky':
+        // Outstand requires a social-networks row; placeholders are fine —
+        // real Bluesky auth is handle + app password on connect.
+        return {
+          key: get('BLUESKY_CLIENT_KEY') || 'bluesky',
+          secret: get('BLUESKY_CLIENT_SECRET') || 'bluesky',
+        };
       default:
         return { key: '', secret: '' };
     }

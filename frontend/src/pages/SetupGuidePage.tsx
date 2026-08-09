@@ -135,6 +135,11 @@ export function SetupGuidePage() {
             — the home page has a dedicated form. Outstand keeps the AT Protocol session; this app
             only stores the returned account id in sessionStorage.
           </li>
+          <li>
+            First connect also ensures an Outstand <code>bluesky</code> social-network row exists
+            (placeholders are enough). You can also run{' '}
+            <code>{`POST /api/networks { "network": "bluesky" }`}</code>.
+          </li>
           <li>Text posts work as-is; attach images through the usual media upload when needed.</li>
         </ol>
       </section>

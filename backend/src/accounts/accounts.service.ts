@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { OutstandService } from '../outstand/outstand.service';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { OutstandService, OutstandApiError } from '../outstand/outstand.service';
 
 @Injectable()
 export class AccountsService {
@@ -58,6 +58,9 @@ export class AccountsService {
    * app password itself). This request body must come from the person who
    * owns the Bluesky account, entered directly in the app's own connect
    * form — never hardcoded, logged, or relayed from anywhere else.
+   *
+   * Outstand still expects a `bluesky` row in /v1/social-networks before
+   * connect works (placeholders are enough — real auth is the app password).
    */
   async connectBluesky(body: {
     handle: string;
@@ -65,10 +68,44 @@ export class AccountsService {
     tenantId?: string;
   }) {
     const handle = body.handle.trim().replace(/^@/, '');
-    const result = await this.outstand.connectBluesky(handle, body.appPassword, {
-      ...(body.tenantId ? { tenantId: body.tenantId } : {}),
-    });
+    if (!handle || !body.appPassword?.trim()) {
+      throw new BadRequestException('handle and appPassword are required');
+    }
+
+    await this.ensureBlueskyNetworkConfigured();
+
+    const result = await this.outstand.connectBluesky(
+      handle,
+      body.appPassword.trim(),
+      {
+        ...(body.tenantId ? { tenantId: body.tenantId } : {}),
+      },
+    );
     const account = (result as { data?: unknown }).data ?? result;
     return { success: true, account };
+  }
+
+  private async ensureBlueskyNetworkConfigured() {
+    try {
+      const listed = await this.outstand.listSocialNetworks();
+      const rows =
+        (listed as { data?: Array<{ network?: string }> }).data ?? [];
+      if (rows.some((n) => (n.network || '').toLowerCase() === 'bluesky')) {
+        return;
+      }
+    } catch {
+      // Fall through and attempt create — Outstand may still accept it.
+    }
+
+    try {
+      await this.outstand.configureNetwork('bluesky', 'bluesky', 'bluesky');
+    } catch (err) {
+      // Another request may have created it concurrently.
+      if (err instanceof OutstandApiError) {
+        const msg = (err.message || '').toLowerCase();
+        if (msg.includes('already') || msg.includes('exists')) return;
+      }
+      throw err;
+    }
   }
 }

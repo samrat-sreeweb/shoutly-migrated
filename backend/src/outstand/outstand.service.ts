@@ -158,9 +158,8 @@ export class OutstandService {
     return this.request('POST', '/v1/social-accounts/bluesky', {
       body: {
         handle,
-        // Outstand REST uses snake_case (same as redirect_uri / client_key).
-        app_password: appPassword,
-        ...(options.tenantId ? { tenant_id: options.tenantId } : {}),
+        appPassword,
+        ...(options.tenantId ? { tenantId: options.tenantId } : {}),
       },
     });
   }
