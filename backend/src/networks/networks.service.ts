@@ -72,6 +72,11 @@ export class NetworksService {
           key: get('BLUESKY_CLIENT_KEY') || 'bluesky',
           secret: get('BLUESKY_CLIENT_SECRET') || 'bluesky',
         };
+      case 'linkedin':
+        return {
+          key: get('LINKEDIN_CLIENT_ID', 'LINKEDIN_APP_ID'),
+          secret: get('LINKEDIN_CLIENT_SECRET', 'LINKEDIN_APP_SECRET'),
+        };
       default:
         return { key: '', secret: '' };
     }

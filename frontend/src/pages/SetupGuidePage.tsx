@@ -119,6 +119,31 @@ export function SetupGuidePage() {
       </section>
 
       <section className="card">
+        <h2>LinkedIn</h2>
+        <ol className="steps">
+          <li>
+            LinkedIn developer app with <strong>Share on LinkedIn</strong> and{' '}
+            <strong>Sign In with LinkedIn using OpenID Connect</strong>. For company Pages, also add{' '}
+            <strong>Advertising API</strong> and/or <strong>Community Management API</strong> when
+            LinkedIn grants them.
+          </li>
+          <li>
+            Auth → Authorized redirect URLs:{' '}
+            <code>https://www.outstand.so/app/api/socials/linkedin/callback</code>
+          </li>
+          <li>
+            Env: <code>LINKEDIN_CLIENT_ID</code> / <code>LINKEDIN_CLIENT_SECRET</code> (Outstand
+            network <code>linkedin</code>). Re-register with{' '}
+            <code>{`POST /api/networks { "network": "linkedin" }`}</code> after rotating keys.
+          </li>
+          <li>
+            Connect via Network → LinkedIn (OAuth). Reconnect after changing apps so tokens match
+            the new client.
+          </li>
+        </ol>
+      </section>
+
+      <section className="card">
         <h2>Bluesky</h2>
         <ol className="steps">
           <li>No OAuth developer app / BYOK — Bluesky uses an app password instead.</li>
@@ -149,7 +174,7 @@ export function SetupGuidePage() {
         <ol className="steps">
           <li>
             <code>
-              GET /api/connect-url?network=instagram|threads|youtube|pinterest|tiktok&amp;redirectUri=…
+              GET /api/connect-url?network=linkedin|instagram|threads|youtube|pinterest|tiktok&amp;redirectUri=…
             </code>
           </li>
           <li>
