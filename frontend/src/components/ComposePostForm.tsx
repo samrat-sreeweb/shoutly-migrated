@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import type { CreatePostPayload, SocialAccount, YoutubeOptions } from '../api/types';
 
 interface ComposePostFormProps {
@@ -30,6 +30,25 @@ export function ComposePostForm({
   const [ytIsShort, setYtIsShort] = useState(true);
   const [ytPrivacy, setYtPrivacy] = useState<YoutubeOptions['privacyStatus']>('public');
   const [formError, setFormError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // The native <input type="file"> keeps showing its last-chosen filename
+  // even after we clear `file` in React state — browsers don't let React
+  // control that field's displayed value. Without this, switching accounts
+  // (which clears `file` below) leaves the button visually showing a file
+  // that is no longer actually attached, so a post can silently go out
+  // text-only while the UI still looks like media is selected.
+  function clearFile() {
+    setFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  // Same reasoning: once a post succeeds, drop the previous file so the
+  // next post (possibly to a different network) can't be mistaken for
+  // still having that media attached.
+  useEffect(() => {
+    if (result?.ok) clearFile();
+  }, [result]);
 
   const effectiveAccountId = accountId || accounts[0]?.id || '';
   const selected = useMemo(
@@ -103,7 +122,7 @@ export function ComposePostForm({
           value={effectiveAccountId}
           onChange={(e) => {
             setAccountId(e.target.value);
-            setFile(null);
+            clearFile();
             setFormError(null);
           }}
           disabled={!accounts.length}
@@ -132,6 +151,7 @@ export function ComposePostForm({
         <input
           id="media-file"
           type="file"
+          ref={fileInputRef}
           accept={accept}
           required={isYoutube}
           onChange={(e) => {
@@ -139,9 +159,15 @@ export function ComposePostForm({
             setFormError(null);
           }}
         />
-        {file && (
+        {file ? (
           <p className="muted media-hint">
             Selected: {file.name} ({Math.round(file.size / 1024)} KB)
+          </p>
+        ) : (
+          <p className="muted media-hint">
+            {isYoutube
+              ? 'No video selected yet — YouTube requires a video file.'
+              : 'No media attached — this post will be text-only.'}
           </p>
         )}
 

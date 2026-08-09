@@ -4,6 +4,7 @@ export interface SocialAccount {
   username?: string;
   profile_picture_url?: string;
   network?: string;
+  createdAt?: string;
 }
 
 export interface Post {
