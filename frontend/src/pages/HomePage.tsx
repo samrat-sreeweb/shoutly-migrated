@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/client';
-import type { CreatePostPayload, Post } from '../api/types';
+import type { CreatePostPayload, Post, SocialAccount } from '../api/types';
 import { AccountList } from '../components/AccountList';
+import { BlueskyConnectForm } from '../components/BlueskyConnectForm';
 import { ComposePostForm } from '../components/ComposePostForm';
 import { ConnectSection } from '../components/ConnectSection';
 import { Header } from '../components/Header';
-import { getSessionAccounts, removeSessionAccount, setPendingNetwork } from '../lib/sessionAccounts';
+import {
+  addSessionAccount,
+  getSessionAccounts,
+  removeSessionAccount,
+  setPendingNetwork,
+} from '../lib/sessionAccounts';
 
 function summarizePostOutcome(post: Post): { ok: boolean; message: string } {
   const accounts = post.socialAccounts || [];
@@ -102,6 +108,17 @@ export function HomePage() {
     setAccounts(removeSessionAccount(accountId));
   }
 
+  function handleBlueskyConnected(account: SocialAccount) {
+    setAccounts(
+      addSessionAccount({
+        id: account.id,
+        username: account.username,
+        nickname: account.nickname ?? account.username,
+        network: account.network ?? 'bluesky',
+      }),
+    );
+  }
+
   async function handlePost(payload: CreatePostPayload & { file?: File }) {
     setSubmitting(true);
     setResult(null);
@@ -141,6 +158,7 @@ export function HomePage() {
         onRefresh={refreshAccounts}
         onNetworkChange={setNetwork}
       />
+      <BlueskyConnectForm onConnected={handleBlueskyConnected} />
       <AccountList accounts={accounts} onRemove={handleRemove} />
       <ComposePostForm
         accounts={accounts}

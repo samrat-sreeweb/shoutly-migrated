@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { CreatePinterestBoardDto } from './dto/create-pinterest-board.dto';
+import { ConnectBlueskyDto } from './dto/connect-bluesky.dto';
 
 @Controller('api/accounts')
 export class AccountsController {
@@ -18,6 +19,12 @@ export class AccountsController {
   @Get()
   list(@Query('network') network?: string) {
     return this.accountsService.list(network);
+  }
+
+  /** Bluesky connects with handle + app password instead of OAuth. */
+  @Post('bluesky')
+  connectBluesky(@Body() body: ConnectBlueskyDto) {
+    return this.accountsService.connectBluesky(body);
   }
 
   @Get(':id/pinterest/boards')

@@ -119,6 +119,27 @@ export function SetupGuidePage() {
       </section>
 
       <section className="card">
+        <h2>Bluesky</h2>
+        <ol className="steps">
+          <li>No OAuth developer app / BYOK — Bluesky uses an app password instead.</li>
+          <li>
+            Create one at{' '}
+            <a href="https://bsky.app/settings/app-passwords" target="_blank" rel="noreferrer">
+              bsky.app/settings/app-passwords
+            </a>{' '}
+            (not your main account password).
+          </li>
+          <li>
+            Connect via <code>POST /api/accounts/bluesky</code> with{' '}
+            <code>{`{ "handle": "you.bsky.social", "appPassword": "xxxx-xxxx-xxxx-xxxx" }`}</code>{' '}
+            — the home page has a dedicated form. Outstand keeps the AT Protocol session; this app
+            only stores the returned account id in sessionStorage.
+          </li>
+          <li>Text posts work as-is; attach images through the usual media upload when needed.</li>
+        </ol>
+      </section>
+
+      <section className="card">
         <h2>API routes</h2>
         <ol className="steps">
           <li>

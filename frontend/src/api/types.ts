@@ -90,6 +90,16 @@ export interface CreatePinterestBoardResponse {
   board: PinterestBoard;
 }
 
+export interface ConnectBlueskyPayload {
+  handle: string;
+  appPassword: string;
+}
+
+export interface ConnectBlueskyResponse {
+  success: true;
+  account: SocialAccount;
+}
+
 export interface CreatePostPayload {
   accountId: string;
   content: string;

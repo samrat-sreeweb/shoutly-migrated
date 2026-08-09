@@ -1,6 +1,8 @@
 import type {
   AccountsResponse,
   ApiErrorBody,
+  ConnectBlueskyPayload,
+  ConnectBlueskyResponse,
   ConnectUrlResponse,
   CreatePinterestBoardResponse,
   CreatePostPayload,
@@ -86,6 +88,16 @@ export const api = {
         body: JSON.stringify({ name, privacy: 'PUBLIC' }),
       },
     );
+  },
+
+  // Bluesky has no OAuth redirect — the handle + app password are submitted
+  // straight from the form the user fills in, over to our backend, over to
+  // Outstand. Nothing in this client ever stores or logs the password.
+  connectBluesky(payload: ConnectBlueskyPayload) {
+    return request<ConnectBlueskyResponse>('/api/accounts/bluesky', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
 };
 

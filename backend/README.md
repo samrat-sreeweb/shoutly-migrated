@@ -74,6 +74,7 @@ Also accepts `"accounts": ["L0CCV", "X2GJe"]` and optional `"media": [{ "url": "
 | `DELETE` | `/api/networks/:id` | Delete a BYOK entry |
 | `GET` | `/api/accounts/:id/pinterest/boards` | List Pinterest boards for an account |
 | `POST` | `/api/accounts/:id/pinterest/boards` | Create a Pinterest board `{ name, privacy? }` |
+| `POST` | `/api/accounts/bluesky` | Connect Bluesky `{ handle, appPassword }` |
 | `GET` | `/api/accounts/:id/metrics` | Account metrics |
 | `GET` | `/api/accounts/:id/health` | Account health |
 | `DELETE` | `/api/accounts/:id` | Disconnect account |

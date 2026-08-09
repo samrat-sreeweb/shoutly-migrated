@@ -50,4 +50,25 @@ export class AccountsService {
       (result as { data?: unknown }).data ?? result;
     return { success: true, board };
   }
+
+  /**
+   * Bluesky has no OAuth step — the handle + app password are submitted
+   * straight through to Outstand, which uses them once to create an AT
+   * Protocol session (Outstand stores the resulting session tokens, not the
+   * app password itself). This request body must come from the person who
+   * owns the Bluesky account, entered directly in the app's own connect
+   * form — never hardcoded, logged, or relayed from anywhere else.
+   */
+  async connectBluesky(body: {
+    handle: string;
+    appPassword: string;
+    tenantId?: string;
+  }) {
+    const handle = body.handle.trim().replace(/^@/, '');
+    const result = await this.outstand.connectBluesky(handle, body.appPassword, {
+      ...(body.tenantId ? { tenantId: body.tenantId } : {}),
+    });
+    const account = (result as { data?: unknown }).data ?? result;
+    return { success: true, account };
+  }
 }
