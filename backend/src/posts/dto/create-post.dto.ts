@@ -9,11 +9,27 @@ import {
   IsObject,
   ValidateNested,
   IsUrl,
+  Matches,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+
+function encodeMediaUrl({ value }: { value: unknown }) {
+  if (typeof value !== 'string') return value;
+  try {
+    return encodeURI(decodeURI(value));
+  } catch {
+    return encodeURI(value);
+  }
+}
 
 export class MediaItemDto {
-  @IsUrl({ require_tld: false }, { message: 'media.url must be a valid URL' })
+  /** Allow spaces in stored Outstand URLs; we normalize to %20 before validate. */
+  @Transform(encodeMediaUrl)
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^https?:\/\/\S+/i, {
+    message: 'media.url must be a valid http(s) URL',
+  })
   url!: string;
 
   @IsOptional()

@@ -112,7 +112,9 @@ export function HomePage() {
         if (!uploaded.url) {
           throw new Error('Media upload returned no URL — cannot publish without media.');
         }
-        media = [{ url: uploaded.url, filename: uploaded.filename || payload.file.name }];
+        // Outstand may return paths with spaces; encode before POST /api/post.
+        const url = encodeURI(decodeURI(uploaded.url));
+        media = [{ url, filename: uploaded.filename || payload.file.name }];
       }
 
       const { file: _file, ...rest } = payload;

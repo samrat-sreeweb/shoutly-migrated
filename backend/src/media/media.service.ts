@@ -11,6 +11,30 @@ const CONTENT_TYPES: Record<string, string> = {
   '.webp': 'image/webp',
 };
 
+/** Outstand stores the filename in the public URL path — spaces break URL validators. */
+function sanitizeFilename(name: string): string {
+  const trimmed = name.trim() || 'upload.bin';
+  const dot = trimmed.lastIndexOf('.');
+  const base = dot > 0 ? trimmed.slice(0, dot) : trimmed;
+  const ext = dot > 0 ? trimmed.slice(dot).toLowerCase() : '';
+  const safeBase = base
+    .replace(/[^a-zA-Z0-9._-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
+    .slice(0, 80);
+  return `${safeBase || 'upload'}${ext}`;
+}
+
+/** Encode path/query safely without double-encoding already-escaped URLs. */
+export function normalizeMediaUrl(url: string): string {
+  try {
+    // URL() rejects unencoded spaces; encodeURI keeps protocol/host intact.
+    return encodeURI(decodeURI(url));
+  } catch {
+    return encodeURI(url);
+  }
+}
+
 @Injectable()
 export class MediaService {
   constructor(private readonly outstand: OutstandService) {}
@@ -22,7 +46,7 @@ export class MediaService {
       throw new BadRequestException('file is required');
     }
 
-    const filename = file.originalname || 'upload.bin';
+    const filename = sanitizeFilename(file.originalname || 'upload.bin');
     const ext = filename.includes('.')
       ? `.${filename.split('.').pop()!.toLowerCase()}`
       : '';
@@ -40,8 +64,8 @@ export class MediaService {
     const media =
       (confirmed as { data?: { url?: string; filename?: string } }).data ??
       (confirmed as { url?: string; filename?: string });
-    const url = media.url;
-    if (!url) {
+    const rawUrl = media.url;
+    if (!rawUrl) {
       throw new BadRequestException(
         'Outstand confirmed the upload but returned no public URL',
       );
@@ -49,7 +73,7 @@ export class MediaService {
 
     return {
       success: true,
-      url,
+      url: normalizeMediaUrl(rawUrl),
       filename: media.filename || filename,
     };
   }

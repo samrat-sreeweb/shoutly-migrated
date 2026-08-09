@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { OutstandService } from '../outstand/outstand.service';
 import { CreatePostDto } from './dto/create-post.dto';
+import { normalizeMediaUrl } from '../media/media.service';
 
 @Injectable()
 export class PostsService {
@@ -28,11 +29,16 @@ export class PostsService {
       throw new BadRequestException('pinterest.board_id is required');
     }
 
+    const media = dto.media?.map((m) => ({
+      url: normalizeMediaUrl(m.url),
+      ...(m.filename ? { filename: m.filename } : {}),
+    }));
+
     const payload: Record<string, unknown> = {
       containers: [
         {
           content: dto.content,
-          ...(dto.media?.length ? { media: dto.media } : {}),
+          ...(media?.length ? { media } : {}),
         },
       ],
       accounts: accountIds,
