@@ -1,25 +1,18 @@
-# ShoutlyAI — X (Twitter) integration
+# ShoutlyAI Migrated
 
-How to run this app and connect **X** via Outstand (BYOK OAuth).
+Outstand-powered multi-network social posting demo.
 
 | Path | Role | Local URL |
 |---|---|---|
-| `backend/` | NestJS API (holds Outstand + X keys) | http://localhost:3000 |
-| `frontend/` | React + Vite UI | http://localhost:5173 |
+| `backend/` | NestJS API (Outstand proxy; keys stay server-side) | http://localhost:3000 |
+| `frontend/` | React + Vite | http://localhost:5173 |
+| `docs/providers/` | Per-network setup guides (copy-paste) | — |
 
-There is **no separate X auth module**. X uses the shared connect flow with `network=x`.
-
----
-
-## Prerequisites
-
-- Node.js 20+
-- [Outstand](https://www.outstand.so) API key
-- [X Developer](https://developer.x.com) app with **OAuth 2.0** Client ID + Client Secret
+No local database and no user login. Connected accounts live in browser `sessionStorage` for that visit only.
 
 ---
 
-## 1. Install
+## Shared quick start
 
 ```bash
 git clone <your-repo-url> shoutly-migrated
@@ -27,198 +20,67 @@ cd shoutly-migrated
 
 cd backend && npm install && cd ..
 cd frontend && npm install && cd ..
+
+cd backend && cp .env.example .env
+# Edit backend/.env — set OUTSTAND_API_KEY at minimum
 ```
 
----
-
-## 2. Backend env (`backend/.env`)
-
-```bash
-cd backend
-cp .env.example .env
-```
-
-Set these values:
-
-```bash
-OUTSTAND_API_KEY=ost_your_key_here
-OUTSTAND_BASE_URL=https://api.outstand.so
-PORT=3000
-CORS_ORIGIN=http://localhost:5173
-OAUTH_SUCCESS_REDIRECT=http://localhost:5173/oauth/callback
-
-# X OAuth 2.0 (required for X)
-X_CLIENT_ID=your_oauth2_client_id
-X_CLIENT_SECRET=your_oauth2_client_secret
-
-# Optional fallbacks only if Client ID/Secret are empty:
-# X_CONSUMER_KEY=
-# X_SECRET_KEY=
-```
-
----
-
-## 3. Frontend env (`frontend/.env`)
+`frontend/.env`:
 
 ```bash
 VITE_API_URL=http://localhost:3000
 ```
 
----
-
-## 4. Configure the X developer app
-
-1. Open https://developer.x.com → your app  
-2. Enable **OAuth 2.0**  
-3. Permissions: **Read and write**  
-4. Callback / redirect URI — exact match:
-
-```text
-https://www.outstand.so/app/api/socials/x/callback
-```
-
-5. Copy **Client ID** and **Client Secret** into `backend/.env` (step 2)
-
----
-
-## 5. Run
-
-Terminal 1:
+Run:
 
 ```bash
-cd backend
-npm run start:dev
+# Terminal 1
+cd backend && npm run start:dev
+
+# Terminal 2
+cd frontend && npm run dev
 ```
 
-Terminal 2:
+- UI: http://localhost:5173  
+- Health: `curl http://localhost:3000/api/health`  
+- Full API list: [`backend/README.md`](backend/README.md)
+
+Shared env keys for every OAuth network:
 
 ```bash
-cd frontend
-npm run dev
+OUTSTAND_API_KEY=
+OUTSTAND_BASE_URL=https://api.outstand.so
+PORT=3000
+CORS_ORIGIN=http://localhost:5173
+OAUTH_SUCCESS_REDIRECT=http://localhost:5173/oauth/callback
 ```
 
-Check API:
-
-```bash
-curl http://localhost:3000/api/health
-```
-
-Open http://localhost:5173
-
----
-
-## 6. Register X with Outstand (BYOK)
+After filling a network’s keys in `.env`, register BYOK:
 
 ```bash
 curl -X POST http://localhost:3000/api/networks \
   -H "Content-Type: application/json" \
-  -d "{\"network\":\"x\"}"
-```
-
-Or pass keys explicitly:
-
-```bash
-curl -X POST http://localhost:3000/api/networks \
-  -H "Content-Type: application/json" \
-  -d "{\"network\":\"x\",\"key\":\"YOUR_CLIENT_ID\",\"secret\":\"YOUR_CLIENT_SECRET\"}"
-```
-
-Confirm:
-
-```bash
-curl http://localhost:3000/api/networks
+  -d "{\"network\":\"NETWORK_NAME\"}"
 ```
 
 ---
 
-## 7. Connect X and post
+## Provider docs
 
-### UI
+Each file is a standalone copy-paste guide for that network.
 
-1. http://localhost:5173  
-2. Network → **X (Twitter)** → **Connect**  
-3. Approve on X → return to `/oauth/callback`  
-4. Compose → **Publish**
-
-### API
-
-Get auth URL (open `authUrl` in a browser):
-
-```bash
-curl "http://localhost:3000/api/connect-url?network=x&redirectUri=http://localhost:5173/oauth/callback"
-```
-
-After connect, publish (replace `ACCOUNT_ID`):
-
-```bash
-curl -X POST http://localhost:3000/api/post \
-  -H "Content-Type: application/json" \
-  -d "{\"accountId\":\"ACCOUNT_ID\",\"content\":\"Hello from Shoutly on X\"}"
-```
-
-Optional media:
-
-```bash
-curl -X POST http://localhost:3000/api/media/upload -F "file=@./sample.jpg"
-```
-
-Then include in the post body:
-
-```json
-{
-  "accountId": "ACCOUNT_ID",
-  "content": "Hello with media",
-  "media": [{ "url": "https://…", "filename": "sample.jpg" }]
-}
-```
-
----
-
-## Flow
-
-```text
-UI (network=x)
-  → GET /api/connect-url?network=x
-  → Outstand auth URL
-  → User approves on X
-  → https://www.outstand.so/app/api/socials/x/callback
-  → http://localhost:5173/oauth/callback
-  → account in sessionStorage
-  → POST /api/post
-```
-
----
-
-## Code map (X only)
-
-| Piece | Path |
+| Network | Doc |
 |---|---|
-| Connect URL | `backend/src/connect/connect.controller.ts` |
-| Outstand `getAuthUrl` | `backend/src/outstand/outstand.service.ts` |
-| BYOK `X_CLIENT_ID` / `X_CLIENT_SECRET` | `backend/src/networks/networks.service.ts` (`case 'x'`) |
-| Network picker (`value: 'x'`) | `frontend/src/components/ConnectSection.tsx` |
-| OAuth callback | `frontend/src/pages/OAuthCallbackPage.tsx` |
-| Compose / publish | `frontend/src/components/ComposePostForm.tsx` |
+| X (Twitter) | [`docs/providers/x.md`](docs/providers/x.md) |
+| Facebook | [`docs/providers/facebook.md`](docs/providers/facebook.md) |
+| Instagram | [`docs/providers/instagram.md`](docs/providers/instagram.md) |
+| Threads | [`docs/providers/threads.md`](docs/providers/threads.md) |
+| LinkedIn | [`docs/providers/linkedin.md`](docs/providers/linkedin.md) |
+| YouTube | [`docs/providers/youtube.md`](docs/providers/youtube.md) |
+| Google Business Profile | [`docs/providers/google-business.md`](docs/providers/google-business.md) |
+| TikTok | [`docs/providers/tiktok.md`](docs/providers/tiktok.md) |
+| Pinterest | [`docs/providers/pinterest.md`](docs/providers/pinterest.md) |
+| Bluesky | [`docs/providers/bluesky.md`](docs/providers/bluesky.md) |
+| Vimeo | [`docs/providers/vimeo.md`](docs/providers/vimeo.md) |
 
----
-
-## Troubleshooting
-
-| Symptom | Fix |
-|---|---|
-| Wrong redirect / OAuth error | Callback must be exactly `https://www.outstand.so/app/api/socials/x/callback` |
-| `Missing credentials for "x"` | Set `X_CLIENT_ID` + `X_CLIENT_SECRET`, restart API, run `POST /api/networks` with `"network":"x"` |
-| Still using old X app | Re-register network after rotating keys, then reconnect in the UI |
-| CORS in browser | `CORS_ORIGIN=http://localhost:5173` and `VITE_API_URL=http://localhost:3000` |
-
----
-
-## Production checklist (X)
-
-- Set `OUTSTAND_API_KEY`, `X_CLIENT_ID`, `X_CLIENT_SECRET` on the API host  
-- Set `VITE_API_URL` to the public API URL on the frontend host  
-- `redirectUri` / `OAUTH_SUCCESS_REDIRECT` = `https://YOUR_FRONTEND/oauth/callback`  
-- X app callback stays: `https://www.outstand.so/app/api/socials/x/callback`  
-- Never commit `.env` or real secrets  
-
-More API endpoints (non-X): `backend/README.md`
+In-app notes: http://localhost:5173/setup
